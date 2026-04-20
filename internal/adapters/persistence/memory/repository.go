@@ -10,7 +10,7 @@ type repository struct {
 	mu   sync.RWMutex
 }
 
-func NewShortLinkRepository() *repository {
+func NewShortLinkRepository() domain.ShortLinkRepository {
 	return &repository{
 		data: make(map[string]*domain.ShortLink), // * Con el make sí crea el map en memoria
 	}

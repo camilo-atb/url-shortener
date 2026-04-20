@@ -1,10 +1,13 @@
 package system
 
-import "time"
+import (
+	"time"
+	"url_shortener/internal/domain"
+)
 
 type clock struct{}
 
-func NewClock() *clock {
+func NewClock() domain.Clock {
 	return &clock{}
 }
 

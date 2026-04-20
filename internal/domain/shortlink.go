@@ -5,12 +5,12 @@ import (
 )
 
 type ShortLink struct {
-	ID          string
-	OriginalURL string
-	Code        string
-	CreatedAt   time.Time
-	ExpiresAt   *time.Time // nil = no expira
-	VisitCount  int
+	ID          string     `json:"id"`
+	OriginalURL string     `json:"originalUrl"`
+	Code        string     `json:"code"`
+	CreatedAt   time.Time  `json:"createdAt"`
+	ExpiresAt   *time.Time `json:"expiresAt"` // nil = no expira
+	VisitCount  int        `json:"visitCount"`
 }
 
 func (s *ShortLink) IsActive(now time.Time) bool { // Pasamos now como parámetro. Esto evita acoplar el dominio a time.Now() y lo hace testeable.

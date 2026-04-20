@@ -1,107 +1,122 @@
-# URL Shortener (Go) — Proyecto de aprendizaje (Arquitectura Hexagonal)
+# URL Shortener (Go)
 
-Proyecto de aprendizaje en **Go** para construir un **servicio de acortamiento de URLs** aplicando **arquitectura hexagonal (Ports & Adapters)**, con foco en separar el **dominio** y los **casos de uso** de los detalles de infraestructura.
+Proyecto de practica para aprender y reforzar **arquitectura hexagonal (Ports & Adapters)** en Go.
 
-> Objetivo: practicar diseño limpio, dependencias hacia adentro y evolución incremental del proyecto (sin “magia” de frameworks).
+Es mi primer proyecto aplicando este estilo de arquitectura, asi que el foco principal esta en la separacion de responsabilidades entre dominio, casos de uso y adaptadores.
 
----
+## Objetivo de aprendizaje
 
-## Qué hace hoy
+Este repositorio prioriza:
 
-- Expone un API HTTP para:
-  - **Crear** un shortlink.
-  - **Resolver** un shortlink y redirigir a la URL original.
-- Usa **persistencia en memoria** (todavía **sin base de datos**).
-- Usa adaptadores de sistema para dependencias como:
-  - reloj (clock),
-  - generador de códigos,
-  - generador de IDs.
+- Diseñar capas con dependencias hacia adentro.
+- Mantener el dominio desacoplado de detalles de infraestructura.
+- Practicar composicion explicita de dependencias en el `main`.
+- Evolucionar de forma incremental (primero memoria, luego base de datos, etc.).
 
----
+## Que hace hoy
 
-## Stack / Dependencias
+- Crea shortlinks por HTTP.
+- Resuelve shortlinks por codigo y redirige a la URL original.
+- Guarda datos en memoria (sin persistencia real aun).
 
-- **Go**
-- HTTP con `net/http`
-- Router: `chi` (ligero)
-- Sin frameworks “pesados” y sin ORM (por ahora).
+## Stack actual
 
----
+- Go
+- `net/http`
+- `github.com/go-chi/chi/v5`
+- `github.com/google/uuid`
 
-## Arquitectura (Hexagonal)
+## Estructura del proyecto
 
-La estructura principal sigue la idea de separar:
-
-- **Domain**: reglas/entidades del negocio.
-- **Application**: casos de uso (use cases).
-- **Ports**: interfaces que definen lo que la app necesita del mundo exterior (entrada/salida).
-- **Adapters**: implementaciones concretas (HTTP, memoria, sistema, etc.).
-
-Estructura (alto nivel):
-
-```
+```text
 cmd/
-  api/            # punto de entrada (main)
+  api/            # punto de entrada
+
 internal/
+  domain/         # entidades, reglas de negocio y errores de dominio
   application/    # casos de uso
-  domain/         # modelo y lógica de dominio
-  ports/
-    input/        # puertos de entrada (contratos hacia la app)
-    output/       # puertos de salida (repositorio, reloj, generator, etc.)
   adapters/
-    httpa/        # adaptador HTTP (handlers)
+    httpa/        # handlers HTTP
     persistence/
       memory/     # repositorio en memoria
-    system/       # clock / code generator / id generator
+      postgres/   # placeholder para repositorio postgres (en progreso)
+    system/       # clock, code generator, id generator
 ```
 
-> Nota honesta (aprendizaje): me di cuenta tarde de que me faltó **formalizar mejor los puertos de entrada**. Como el objetivo del repo es aprender, queda documentado como parte del proceso y próximos pasos.
-
----
-
-## Cómo ejecutar
-
-1. Clona el repositorio
-2. Ejecuta el API:
+## Ejecutar localmente
 
 ```bash
 go run ./cmd/api
 ```
 
-El servidor inicia en:
+Servidor en:
 
 - `http://localhost:8080`
 
----
+## Uso de la API
 
-## Endpoints
+### 1) Crear shortlink
 
-- `POST /shortlinks` → crea un shortlink
-- `GET /{code}` → resuelve el shortlink
+Metodo y endpoint:
 
-(La forma exacta del body/response puede variar; la intención principal es practicar la separación por capas y el flujo de dependencias.)
+- `POST http://localhost:8080/shortlinks`
 
----
+Body:
 
-## Estado actual y próximos pasos (idea)
+```json
+{
+  "url": "https://www.facebook.com/"
+}
+```
 
-- [ ] Agregar persistencia real (por ejemplo Postgres/SQLite) mediante un adaptador de `ports/output`
-- [ ] Completar/ajustar el modelado de **puertos de entrada**
-- [ ] Mejorar validaciones y manejo de errores
-- [ ] Tests de casos de uso y adaptadores
+Ejemplo con `curl`:
 
----
+```bash
+curl -X POST http://localhost:8080/shortlinks \
+  -H "Content-Type: application/json" \
+  -d '{"url":"https://www.facebook.com/"}'
+```
 
-## Motivación
+Respuesta esperada (ejemplo):
 
-Este repositorio existe para practicar:
-- arquitectura hexagonal en un proyecto pequeño pero real,
-- composición explícita de dependencias en `main`,
-- adaptadores intercambiables (memoria hoy, DB mañana),
-- claridad de diseño antes que complejidad.
+- Status: `201 Created`
 
----
+```json
+{
+  "id": "355e4e68-7ed9-4bdd-b296-f082eaf0f984",
+  "originalUrl": "https://www.instagram.com/",
+  "code": "DGwJNs",
+  "createdAt": "2026-04-19T20:34:44.3672022-05:00",
+  "expiresAt": null,
+  "visitCount": 0
+}
+```
+
+### 2) Resolver shortlink
+
+Con el valor de `Code`, usa:
+
+- `GET http://localhost:8080/{code}`
+
+Ejemplo:
+
+- `GET http://localhost:8080/DGwJNs`
+
+Eso redirige a la URL original (por ejemplo, Instagram).
+
+## Nota importante sobre expiracion
+
+Aunque el modelo ya contempla `expiresAt`, en este estado del proyecto la creacion se hace sin expiracion (`nil`), por eso en la respuesta aparece `"expiresAt": null`.
+
+## Estado actual
+
+Este proyecto esta bien para aprendizaje y practica de arquitectura hexagonal. Aun asi, los siguientes pasos naturales serian:
+
+- Implementar persistencia real (Postgres).
+- Formalizar/mejorar puertos de entrada y salida para mantener consistencia arquitectonica.
+- Agregar validaciones mas completas y mejor manejo de errores HTTP.
+- Agregar tests de casos de uso y adaptadores.
 
 ## Licencia
 
-Ver archivo `LICENSE`.
+Ver `LICENSE`.

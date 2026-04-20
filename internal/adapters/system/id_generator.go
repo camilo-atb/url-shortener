@@ -1,10 +1,14 @@
 package system
 
-import "github.com/google/uuid"
+import (
+	"url_shortener/internal/domain"
+
+	"github.com/google/uuid"
+)
 
 type idGenerator struct{}
 
-func NewIDGenerator() *idGenerator {
+func NewIDGenerator() domain.IDGenerator {
 	return &idGenerator{}
 }
 
